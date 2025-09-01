@@ -1,6 +1,6 @@
 import React from 'react'
 import { Route, Routes } from 'react-router'
-import Login from './pages/Login/Login'
+import Login from './pages/Login/LoginPage'
 import Chat from './pages/Chat/Chat'
 
 const App = () => {

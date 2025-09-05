@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import LeftSidebar from '../../components/LeftSidebar/LeftSidebar'
 import ChatBox from '../../components/chatBox/ChatBox'
-import RightSidebar from '../../components/rightSidebar/RightSidebar'
 import bgImage from '../../assets/chat-bg.jpg'
 
 const Chat = () => {
@@ -14,7 +13,6 @@ const Chat = () => {
     >
       <LeftSidebar onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       <ChatBox selectedChat={selectedChat} />
-      <RightSidebar />
     </div>
   )
 }

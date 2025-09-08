@@ -11,7 +11,7 @@ const AuthForm = ({ currState, setCurrState }) => {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
 
-  const navigate = useNavigate() // useNavigate hook
+  const navigate = useNavigate() 
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -28,7 +28,7 @@ const AuthForm = ({ currState, setCurrState }) => {
       const newUser = { username, email, password }
       users.push(newUser)
       localStorage.setItem('users', JSON.stringify(users))
-      localStorage.setItem('currentUser', JSON.stringify(newUser)) // Optional session
+      localStorage.setItem('currentUser', JSON.stringify(newUser)) 
       setMessage('Signup successful! Redirecting...')
       navigate('/chat') 
     } else {

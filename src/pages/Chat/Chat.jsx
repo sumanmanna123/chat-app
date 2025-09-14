@@ -4,7 +4,7 @@ import ChatBox from '../../components/chatBox/ChatBox'
 import bgImage from '../../assets/chat-bg.jpg'
 
 const Chat = () => {
-  const [selectedChat, setSelectedChat] = useState(null)
+  const [selectedChat, setSelectedChat] = useState(null);
 
   return (
     <div
@@ -14,7 +14,7 @@ const Chat = () => {
       <LeftSidebar onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       <ChatBox selectedChat={selectedChat} />
     </div>
-  )
-}
+  );
+};
 
-export default Chat
+export default Chat;

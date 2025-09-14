@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 const ChatHeader = ({ selectedChat }) => {
   return (
@@ -7,7 +7,7 @@ const ChatHeader = ({ selectedChat }) => {
         {selectedChat ? `Chat with ${selectedChat.name}` : 'Select a chat'}
       </h2>
     </div>
-  )
-}
+  );
+};
 
-export default ChatHeader
+export default ChatHeader;

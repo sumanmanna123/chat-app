@@ -1,5 +1,11 @@
 import React from 'react';
 
+const getUsername = (email) => {
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const user = users.find(u => u.email === email);
+  return user ? user.username : email;
+};
+
 const PendingRequests = ({ requests, onAccept }) => (
   <div className="mb-6">
     <h3 className="font-semibold mb-2">Friend Requests</h3>
@@ -9,7 +15,7 @@ const PendingRequests = ({ requests, onAccept }) => (
       <ul className="space-y-2">
         {requests.map((email) => (
           <li key={email} className="flex justify-between items-center">
-            <span className="text-sm">{email}</span>
+            <span className="text-sm">{getUsername(email)}</span>
             <button
               onClick={() => onAccept(email)}
               className="bg-green-500 text-white text-xs px-2 py-1 rounded"

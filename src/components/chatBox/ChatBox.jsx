@@ -1,57 +1,78 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import io from 'socket.io-client';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 
+const socket = io('http://localhost:5000', {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
+
 const ChatBox = ({ selectedChat }) => {
   const [messages, setMessages] = useState([]);
-  const intervalRef = useRef(null);
+  const currentUser = useMemo(() => JSON.parse(sessionStorage.getItem('currentUser')) || null, []);
 
-  const loadMessages = () => {
-    if (selectedChat) {
-      const storedMessages = localStorage.getItem(`chatMessages-${selectedChat.id}`);
-      setMessages(storedMessages ? JSON.parse(storedMessages) : []);
-    }
+  const getChatId = () => {
+    if (!selectedChat || !currentUser) return null;
+    return [currentUser.email, selectedChat.id].sort().join('-');
   };
 
+  const chatId = useMemo(getChatId, [selectedChat, currentUser]);
+
   useEffect(() => {
-    if (!selectedChat) return;
+    if (!currentUser || !selectedChat) {
+      setMessages([]);
+      return;
+    }
 
-    loadMessages(); 
-
-
-    intervalRef.current = setInterval(() => {
-      loadMessages();
-    }, 1000);
-
-    return () => clearInterval(intervalRef.current);
-  }, [selectedChat]);
-
-  const handleSend = ({ text, image }) => {
-    if (!selectedChat) return;
-
-    const newMessage = {
-      id: Date.now(),
-      text,
-      image,
-      sender: 'You',
-      timestamp: new Date().toISOString(),
+    const handleMessage = ({ chatId: incomingChatId, messages: incomingMessages }) => {
+      console.log('Received message:', { incomingChatId, incomingMessages }); // Debug log
+      if (incomingChatId === chatId) {
+        setMessages(incomingMessages || []);
+      }
     };
 
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    localStorage.setItem(`chatMessages-${selectedChat.id}`, JSON.stringify(updatedMessages));
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      socket.emit('login', currentUser.email);
+    });
+
+    socket.on('message', handleMessage);
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
+
+    if (socket.connected) {
+      socket.emit('login', currentUser.email);
+    }
+
+    return () => {
+      socket.off('message', handleMessage);
+      socket.off('connect');
+      socket.off('connect_error');
+    };
+  }, [chatId, currentUser]);
+
+  const handleSend = ({ text, image }) => {
+    if (!selectedChat || !currentUser) return;
+    socket.emit('sendMessage', {
+      sender: currentUser.email,
+      recipient: selectedChat.id,
+      text,
+      image
+    });
   };
 
   return (
     <div className="h-screen w-4/5 flex flex-col">
       <ChatHeader selectedChat={selectedChat} />
-
       <div className="flex-1 p-4 overflow-y-auto text-gray-700 space-y-4">
-        <ChatMessages selectedChat={selectedChat} messages={messages} />
+        <ChatMessages selectedChat={selectedChat} messages={messages} currentUserEmail={currentUser?.email} />
       </div>
-
-      {selectedChat && <ChatInput onSend={handleSend} />}
+      {selectedChat && currentUser && <ChatInput onSend={handleSend} />}
     </div>
   );
 };

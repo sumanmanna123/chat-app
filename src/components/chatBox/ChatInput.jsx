@@ -1,32 +1,34 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
 const ChatInput = ({ onSend }) => {
-  const [message, setMessage] = useState('')
-  const [image, setImage] = useState(null)
+  const [message, setMessage] = useState('');
+  const [image, setImage] = useState(null);
 
   const handleSendMessage = (e) => {
-    e.preventDefault()
-    if (!message.trim() && !image) return
+    e.preventDefault();
+    if (!message.trim() && !image) return;
+    onSend({ text: message.trim(), image });
+    setMessage('');
+    setImage(null);
+  };
 
-    onSend({
-      text: message.trim(),
-      image,
-    })
-
-    setMessage('')
-    setImage(null)
-  }
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImage(reader.result)
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const response = await fetch('http://localhost:5000/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const { imageUrl } = await response.json();
+        setImage(imageUrl);
+      } catch (error) {
+        console.error('Image upload failed:', error);
       }
-      reader.readAsDataURL(file)
     }
-  }
+  };
 
   return (
     <div className="p-4 bg-white border-t">
@@ -51,7 +53,6 @@ const ChatInput = ({ onSend }) => {
           Send
         </button>
       </form>
-
       {image && (
         <div className="mt-2">
           <p className="text-sm text-gray-500">Image preview:</p>
@@ -59,7 +60,7 @@ const ChatInput = ({ onSend }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ChatInput
+export default ChatInput;

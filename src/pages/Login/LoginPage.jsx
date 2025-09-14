@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import AuthForm from '../../components/authForm/AuthForm';
 
-
 const LoginPage = () => {
   const [currState, setCurrState] = useState("Login in to your account");
 
@@ -12,7 +11,7 @@ const LoginPage = () => {
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
             {currState}
           </h1>
-          <AuthForm currState={currState} setCurrState={setCurrState}/>
+          <AuthForm currState={currState} setCurrState={setCurrState} />
         </div>
       </div>
     </div>

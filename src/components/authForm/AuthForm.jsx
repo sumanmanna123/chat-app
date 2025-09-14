@@ -1,54 +1,40 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom' 
-import InputField from '../inputField/InputField'
-import FormToggleMessage from '../toggleMessage/ToggleMessage'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import InputField from '../inputField/InputField';
+import FormToggleMessage from '../toggleMessage/ToggleMessage';
 
 const AuthForm = ({ currState, setCurrState }) => {
-  const isSignup = currState === 'Create your account'
+  const isSignup = currState === 'Create your account';
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
-
-  const navigate = useNavigate() 
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
-    const users = JSON.parse(localStorage.getItem('users')) || []
-
-    if (isSignup) {
-      const userExists = users.find((user) => user.email === email)
-      if (userExists) {
-        setMessage('User already exists. Please login.')
-        return
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const endpoint = isSignup ? '/signup' : '/login';
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        sessionStorage.setItem('currentUser', JSON.stringify({ username, email }));
+        setMessage(`${isSignup ? 'Signup' : 'Login'} successful! Redirecting...`);
+        navigate('/chat');
+      } else {
+        setMessage(data.error || 'An error occurred. Please try again.');
       }
-
-      const newUser = { username, email, password }
-      users.push(newUser)
-      localStorage.setItem('users', JSON.stringify(users))
-      localStorage.setItem('currentUser', JSON.stringify(newUser)) 
-      setMessage('Signup successful! Redirecting...')
-      navigate('/chat') 
-    } else {
-      const existingUser = users.find(
-        (user) => user.email === email && user.password === password
-      )
-      if (!existingUser) {
-        setMessage('Invalid credentials. Please try again.')
-        return
-      }
-
-      localStorage.setItem('currentUser', JSON.stringify(existingUser))
-      setMessage('Login successful! Redirecting...')
-      navigate('/chat') 
+    } catch (error) {
+      setMessage('Network error. Please try again.');
     }
-
-    setUsername('')
-    setEmail('')
-    setPassword('')
-  }
+    setUsername('');
+    setEmail('');
+    setPassword('');
+  };
 
   return (
     <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
@@ -61,7 +47,6 @@ const AuthForm = ({ currState, setCurrState }) => {
           onChange={(e) => setUsername(e.target.value)}
         />
       )}
-
       <InputField
         label="Your email"
         type="email"
@@ -69,7 +54,6 @@ const AuthForm = ({ currState, setCurrState }) => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-
       <InputField
         label="Password"
         type="password"
@@ -77,9 +61,7 @@ const AuthForm = ({ currState, setCurrState }) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-
       {message && <p className="text-sm text-red-600 dark:text-red-400">{message}</p>}
-
       <div className="flex items-center justify-between">
         <div className="flex items-start">
           <input
@@ -98,7 +80,6 @@ const AuthForm = ({ currState, setCurrState }) => {
           Forgot password?
         </a>
       </div>
-
       <div className="w-full">
         <button
           type="submit"
@@ -107,10 +88,9 @@ const AuthForm = ({ currState, setCurrState }) => {
           {isSignup ? 'Sign up' : 'Login'}
         </button>
       </div>
-
       <FormToggleMessage currState={currState} setCurrState={setCurrState} />
     </form>
-  )
-}
+  );
+};
 
-export default AuthForm
+export default AuthForm;

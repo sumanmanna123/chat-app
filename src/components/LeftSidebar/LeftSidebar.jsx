@@ -1,88 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import FriendRequestInput from './FriendRequestInput';
 import PendingRequests from './PendingRequests';
 import FriendList from './FriendList';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5000', {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
 
 const LeftSidebar = ({ onSelectChat, selectedChat }) => {
   const [emailToAdd, setEmailToAdd] = useState('');
   const [friendRequests, setFriendRequests] = useState([]);
   const [friends, setFriends] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
-
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const currentUser = useMemo(() => JSON.parse(sessionStorage.getItem('currentUser')) || null, []);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    const requests = JSON.parse(localStorage.getItem('friendRequests')) || {};
-    setFriendRequests(requests[currentUser.email] || []);
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      socket.emit('login', currentUser.email.toLowerCase());
+    });
 
-    const allFriends = JSON.parse(localStorage.getItem('friends')) || {};
-    setFriends(allFriends[currentUser.email] || []);
+    socket.on('init', ({ friendRequests, friends, unreadCounts }) => {
+      console.log('Received init:', { friendRequests, friends, unreadCounts });
+      setFriendRequests(friendRequests || []);
+      setFriends(friends || []);
+      setUnreadCounts(unreadCounts || {});
+    });
 
-    const unread = JSON.parse(localStorage.getItem('unreadCounts')) || {};
-    setUnreadCounts(unread);
-  }, [selectedChat]);
+    socket.on('friendRequest', ({ from }) => {
+      console.log('Received friend request from:', from);
+      setFriendRequests(prev => [...new Set([...prev, from])]);
+    });
 
-  const handleSendRequest = () => {
-    if (emailToAdd === currentUser.email) {
+    socket.on('friendUpdate', ({ friends: updatedFriends, friendRequests: updatedRequests }) => {
+      console.log('Received friend update:', { updatedFriends, updatedRequests });
+      setFriends(updatedFriends || []);
+      setFriendRequests(updatedRequests || []);
+    });
+
+    socket.on('message', ({ unreadCounts: updatedUnread }) => {
+      console.log('Received unread counts:', updatedUnread);
+      setUnreadCounts(updatedUnread || {});
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
+
+    if (socket.connected) {
+      socket.emit('login', currentUser.email.toLowerCase());
+    }
+
+    return () => {
+      socket.off('init');
+      socket.off('friendRequest');
+      socket.off('friendUpdate');
+      socket.off('message');
+      socket.off('connect_error');
+      socket.off('connect');
+    };
+  }, [currentUser]);
+
+  const handleSendRequest = async () => {
+    if (!currentUser || emailToAdd.toLowerCase() === currentUser.email.toLowerCase()) {
       alert("You can't add yourself.");
       return;
     }
-
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userExists = users.find((user) => user.email === emailToAdd);
-    if (!userExists) {
-      alert("User does not exist.");
-      return;
+    try {
+      const emailToAddLower = emailToAdd.toLowerCase();
+      console.log('Sending friend request to:', emailToAddLower);
+      const response = await fetch(`http://localhost:5000/users/${encodeURIComponent(emailToAddLower)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      console.log('User lookup response:', { status: response.status, statusText: response.statusText });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('Error data:', errorData);
+        alert(errorData.error || 'User does not exist.');
+        return;
+      }
+      const { username } = await response.json();
+      console.log('User found:', { username, email: emailToAddLower });
+      socket.emit('sendFriendRequest', { from: currentUser.email.toLowerCase(), to: emailToAddLower });
+      setEmailToAdd('');
+      alert(`Friend request sent to ${username || emailToAddLower}`);
+    } catch (error) {
+      console.error('Fetch error:', error.message);
+      alert('Network error. Please check your connection and try again.');
     }
-
-    const requests = JSON.parse(localStorage.getItem('friendRequests')) || {};
-    const recipientRequests = requests[emailToAdd] || [];
-
-    if (!recipientRequests.includes(currentUser.email)) {
-      recipientRequests.push(currentUser.email);
-      requests[emailToAdd] = recipientRequests;
-      localStorage.setItem('friendRequests', JSON.stringify(requests));
-      alert('Friend request sent.');
-    } else {
-      alert('Friend request already sent.');
-    }
-
-    setEmailToAdd('');
   };
 
   const acceptRequest = (email) => {
-    const allFriends = JSON.parse(localStorage.getItem('friends')) || {};
-    const myFriends = allFriends[currentUser.email] || [];
-    const theirFriends = allFriends[email] || [];
-
-    if (!myFriends.includes(email)) {
-      myFriends.push(email);
-      theirFriends.push(currentUser.email);
-    }
-
-    allFriends[currentUser.email] = myFriends;
-    allFriends[email] = theirFriends;
-
-    localStorage.setItem('friends', JSON.stringify(allFriends));
-    setFriends(myFriends);
-
-    const allRequests = JSON.parse(localStorage.getItem('friendRequests')) || {};
-    const updatedRequests = (allRequests[currentUser.email] || []).filter((req) => req !== email);
-    allRequests[currentUser.email] = updatedRequests;
-    localStorage.setItem('friendRequests', JSON.stringify(allRequests));
-
-    setFriendRequests(updatedRequests);
+    console.log('Accepting friend request from:', email);
+    socket.emit('acceptFriendRequest', { from: currentUser.email.toLowerCase(), to: email.toLowerCase() });
   };
 
-  const handleSelectChat = (email) => {
-    const unread = JSON.parse(localStorage.getItem('unreadCounts')) || {};
-    unread[email] = 0;
-    localStorage.setItem('unreadCounts', JSON.stringify(unread));
-    setUnreadCounts(unread);
+  const getUsername = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/users/${encodeURIComponent(email.toLowerCase())}`);
+      if (!response.ok) return email;
+      const { username } = await response.json();
+      return username || email;
+    } catch {
+      return email;
+    }
+  };
 
-    onSelectChat({ id: email, name: email });
+  const handleSelectChat = async (email) => {
+    const username = await getUsername(email);
+    setUnreadCounts(prev => ({ ...prev, [email]: 0 }));
+    onSelectChat({ id: email.toLowerCase(), name: username });
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('currentUser');
+    socket.disconnect();
+    window.location.href = '/';
   };
 
   if (!currentUser) {
@@ -95,19 +134,24 @@ const LeftSidebar = ({ onSelectChat, selectedChat }) => {
 
   return (
     <div className="w-1/5 bg-white border-r p-4 overflow-y-auto">
-      <h2 className="text-xl font-semibold mb-4">Welcome, {currentUser.username}</h2>
-
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Welcome, {currentUser.username}</h2>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white text-xs px-2 py-1 rounded"
+        >
+          Logout
+        </button>
+      </div>
       <FriendRequestInput
         emailToAdd={emailToAdd}
         setEmailToAdd={setEmailToAdd}
         handleSendRequest={handleSendRequest}
       />
-
       <PendingRequests
         requests={friendRequests}
         onAccept={acceptRequest}
       />
-
       <FriendList
         friends={friends}
         unreadCounts={unreadCounts}

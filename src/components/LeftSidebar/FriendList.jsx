@@ -1,5 +1,11 @@
 import React from 'react';
 
+const getUsername = (email) => {
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const user = users.find(u => u.email === email);
+  return user ? user.username : email;
+};
+
 const FriendList = ({ friends, unreadCounts, selectedChat, onSelect }) => (
   <div>
     <h3 className="font-semibold mb-2">Friends</h3>
@@ -15,7 +21,7 @@ const FriendList = ({ friends, unreadCounts, selectedChat, onSelect }) => (
               selectedChat?.id === email ? 'bg-gray-300' : ''
             } flex justify-between items-center`}
           >
-            <span className="text-sm">{email}</span>
+            <span className="text-sm">{getUsername(email)}</span>
             {unreadCounts[email] > 0 && (
               <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                 {unreadCounts[email]}

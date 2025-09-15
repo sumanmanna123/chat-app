@@ -28,7 +28,7 @@ const ChatBox = ({ selectedChat }) => {
     }
 
     const handleMessage = ({ chatId: incomingChatId, messages: incomingMessages }) => {
-      console.log('Received message:', { incomingChatId, incomingMessages }); // Debug log
+      console.log('Received message:', { incomingChatId, incomingMessages }); 
       if (incomingChatId === chatId) {
         setMessages(incomingMessages || []);
       }

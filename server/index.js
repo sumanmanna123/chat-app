@@ -1,4 +1,3 @@
-// D:\chat-app\chat-app\server\index.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -39,7 +38,7 @@ let unreadCounts = {};
 
 app.post('/signup', (req, res) => {
   const { username, email, password } = req.body;
-  console.log('Signup attempt:', { username, email }); // Debug log
+  console.log('Signup attempt:', { username, email }); 
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -48,13 +47,13 @@ app.post('/signup', (req, res) => {
     return res.status(400).json({ error: 'User already exists' });
   }
   users.push({ username, email: emailLower, password });
-  console.log('Users after signup:', users); // Debug log
+  console.log('Users after signup:', users);
   res.json({ message: 'Signup successful', user: { username, email: emailLower } });
 });
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  console.log('Login attempt:', { email }); // Debug log
+  console.log('Login attempt:', { email }); 
   const emailLower = email.toLowerCase();
   const user = users.find(user => user.email.toLowerCase() === emailLower && user.password === password);
   if (!user) {
@@ -65,13 +64,13 @@ app.post('/login', (req, res) => {
 
 app.get('/users/:email', (req, res) => {
   const { email } = req.params;
-  console.log('User lookup:', email); // Debug log
+  console.log('User lookup:', email); 
   const emailLower = email.toLowerCase();
   const user = users.find(u => u.email.toLowerCase() === emailLower);
   if (user) {
     res.json({ username: user.username, email: user.email });
   } else {
-    console.log('Users checked:', users); // Debug log
+    console.log('Users checked:', users); 
     res.status(404).json({ error: 'User not found' });
   }
 });

@@ -120,18 +120,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', ({ sender, recipient, text, image }) => {
-    const senderLower = sender.toLowerCase();
-    const recipientLower = recipient.toLowerCase();
-    console.log(`Message from ${senderLower} to ${recipientLower}: ${text || image}`);
-    const chatId = [senderLower, recipientLower].sort().join('-');
-    if (!messages[chatId]) messages[chatId] = [];
-    const newMessage = { id: Date.now(), sender: senderLower, text, image, timestamp: new Date().toISOString() };
-    messages[chatId].push(newMessage);
-    if (!unreadCounts[recipientLower]) unreadCounts[recipientLower] = {};
-    unreadCounts[recipientLower][senderLower] = (unreadCounts[recipientLower][senderLower] || 0) + 1;
-    io.to(senderLower).emit('message', { chatId, messages: messages[chatId], unreadCounts: unreadCounts[senderLower] });
-    io.to(recipientLower).emit('message', { chatId, messages: messages[chatId], unreadCounts: unreadCounts[recipientLower] });
-  });
+  const senderLower = sender.toLowerCase();
+  const recipientLower = recipient.toLowerCase();
+  const chatId = [senderLower, recipientLower].sort().join('-');
+  if (!messages[chatId]) messages[chatId] = [];
+  const newMessage = { id: Date.now(), sender: senderLower, text, image, timestamp: new Date().toISOString() };
+  messages[chatId].push(newMessage);
+  if (!unreadCounts[recipientLower]) unreadCounts[recipientLower] = {};
+  unreadCounts[recipientLower][senderLower] = (unreadCounts[recipientLower][senderLower] || 0) + 1;
+  io.to(senderLower).emit('message', { chatId, messages: messages[chatId], unreadCounts: unreadCounts[senderLower] });
+  io.to(recipientLower).emit('message', { chatId, messages: messages[chatId], unreadCounts: unreadCounts[recipientLower] });
+});
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);

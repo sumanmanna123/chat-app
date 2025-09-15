@@ -12,23 +12,24 @@ const ChatInput = ({ onSend }) => {
     setImage(null);
   };
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('image', file);
-      try {
-        const response = await fetch('http://localhost:5000/upload', {
-          method: 'POST',
-          body: formData
-        });
-        const { imageUrl } = await response.json();
-        setImage(imageUrl);
-      } catch (error) {
-        console.error('Image upload failed:', error);
-      }
+const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const response = await fetch('http://localhost:5000/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const { imageUrl } = await response.json();
+      console.log('Image URL received:', imageUrl); 
+      setImage(`http://localhost:5000${imageUrl}`); 
+    } catch (error) {
+      console.error('Image upload failed:', error);
     }
-  };
+  }
+};
 
   return (
     <div className="p-4 bg-white border-t">

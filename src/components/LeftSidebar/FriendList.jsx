@@ -7,7 +7,6 @@ const getUsername = (email) => {
 };
 
 const FriendList = ({ friends, unreadCounts, selectedChat, onSelect }) => {
-  console.log('Rendering FriendList with friends:', friends); // Debug log
   return (
     <div>
       <h3 className="font-semibold mb-2">Friends</h3>

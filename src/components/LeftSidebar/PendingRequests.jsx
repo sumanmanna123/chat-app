@@ -7,7 +7,6 @@ const getUsername = (email) => {
 };
 
 const PendingRequests = ({ requests, onAccept }) => {
-  console.log('Rendering PendingRequests with requests:', requests); // Debug log
   return (
     <div className="mb-6">
       <h3 className="font-semibold mb-2">Friend Requests</h3>

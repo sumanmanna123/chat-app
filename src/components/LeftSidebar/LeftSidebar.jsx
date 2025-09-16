@@ -24,41 +24,29 @@ const LeftSidebar = ({ onSelectChat, selectedChat }) => {
     if (!currentUser) return;
 
     socket.on("connect", () => {
-      console.log("Connected to server");
       socket.emit("login", currentUser.email.toLowerCase());
     });
 
     socket.on("init", ({ friendRequests, friends, unreadCounts }) => {
-      console.log("Received init:", { friendRequests, friends, unreadCounts });
       setFriendRequests(friendRequests || []);
       setFriends(friends || []);
       setUnreadCounts(unreadCounts || {});
     });
 
     socket.on("friendRequest", ({ from }) => {
-      console.log("Received friend request from:", from);
       setFriendRequests((prev) => [...new Set([...prev, from])]);
     });
 
     socket.on(
       "friendUpdate",
       ({ friends: updatedFriends, friendRequests: updatedRequests }) => {
-        console.log("Received friend update:", {
-          updatedFriends,
-          updatedRequests,
-        });
         setFriends(updatedFriends || []);
         setFriendRequests(updatedRequests || []);
       }
     );
 
     socket.on("message", ({ unreadCounts: updatedUnread }) => {
-      console.log("Received unread counts:", updatedUnread);
       setUnreadCounts(updatedUnread || {});
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error.message);
     });
 
     if (socket.connected) {
@@ -85,45 +73,35 @@ const LeftSidebar = ({ onSelectChat, selectedChat }) => {
     }
     try {
       const emailToAddLower = emailToAdd.toLowerCase();
-      console.log("Sending friend request to:", emailToAddLower);
       const response = await fetch(
         `http://localhost:5000/users/${encodeURIComponent(emailToAddLower)}`
       );
       if (!response.ok) {
         const errorData = await response.json();
-        console.log("Error data:", errorData);
         alert(errorData.error || "User does not exist.");
         return;
       }
       const { username } = await response.json();
-      console.log("User found:", { username, email: emailToAddLower });
       socket.emit("sendFriendRequest", {
         from: currentUser.email.toLowerCase(),
         to: emailToAddLower,
       });
       setEmailToAdd("");
       alert(`Friend request sent to ${username || emailToAddLower}`);
-    } catch (error) {
-      console.error("Fetch error:", error.message);
+    } catch {
       alert("Network error. Please check your connection and try again.");
     }
   };
 
   const acceptRequest = (email) => {
-    console.log("Accepting friend request from:", email);
     const emailLower = email.toLowerCase();
     socket.emit("acceptFriendRequest", {
       from: currentUser.email.toLowerCase(),
       to: emailLower,
     });
-    console.log("Current friend requests before filter:", friendRequests);
-    setFriendRequests((prevRequests) => {
-      const updatedRequests = prevRequests.filter(
-        (req) => req.toLowerCase() !== emailLower
-      );
-      console.log("Updated friend requests:", updatedRequests);
-      return updatedRequests;
-    });
+    setFriendRequests((prevRequests) =>
+      prevRequests.filter((req) => req.toLowerCase() !== emailLower)
+    );
   };
 
   const getUsername = async (email) => {
@@ -141,7 +119,7 @@ const LeftSidebar = ({ onSelectChat, selectedChat }) => {
 
   const handleSelectChat = async (email) => {
     const username = await getUsername(email);
-    setUnreadCounts((prev) => ({ ...prev, [email]: 0 }));
+    setUnreadCounts((prev) => ({ ...prev, [email.toLowerCase()]: 0 }));
     onSelectChat({ id: email.toLowerCase(), name: username });
   };
 
@@ -175,7 +153,11 @@ const LeftSidebar = ({ onSelectChat, selectedChat }) => {
         setEmailToAdd={setEmailToAdd}
         handleSendRequest={handleSendRequest}
       />
-      <PendingRequests key={friendRequests.length} requests={friendRequests} onAccept={acceptRequest} />
+      <PendingRequests
+        key={friendRequests.length}
+        requests={friendRequests}
+        onAccept={acceptRequest}
+      />
       <FriendList
         friends={friends}
         unreadCounts={unreadCounts}

@@ -1,62 +1,36 @@
-import React from "react";
+import React from 'react';
 
-const getUsername = (email) => {
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const user = users.find((u) => u.email === email);
-  return user ? user.username : email;
-};
-
-const ChatMessages = ({ selectedChat, messages, currentUserEmail }) => {
-  if (!selectedChat) {
-    return <p>Please select a chat from the sidebar to start messaging.</p>;
-  }
-  if (messages.length === 0) {
-    return <p>No messages yet. Start the conversation!</p>;
-  }
+const ChatMessages = ({ messages, currentUserEmail }) => {
   return (
-    <div className="flex flex-col space-y-4">
-      {messages.map((msg) => {
-        const isMine = msg.sender === currentUserEmail;
-        return (
+    <div>
+      {messages.length === 0 ? (
+        <p className="text-gray-500 text-center">No messages yet</p>
+      ) : (
+        messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+            className={`mb-4 flex ${msg.sender === currentUserEmail ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-xs p-3 rounded-lg ${
-                isMine ? "bg-blue-100" : "bg-gray-100"
+                msg.sender === currentUserEmail
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-800'
               }`}
             >
-              {!isMine && (
-                <p className="text-sm font-semibold mb-1">
-                  {getUsername(msg.sender)}
-                </p>
-              )}
-              {msg.text && <p className="text-sm mb-1">{msg.text}</p>}
+              <p className="text-sm">{msg.text}</p>
               {msg.image && (
                 <img
-                  src={
-                    msg.image.startsWith("http")
-                      ? msg.image
-                      : `http://localhost:5000${msg.image}`
-                  }
-                  alt="uploaded"
-                  className="rounded max-w-full max-h-60 mb-1"
-                  onError={(e) =>
-                    console.log("Image load error:", e.target.src)
-                  }
+                  src={msg.image}
+                  alt="attachment"
+                  className="max-w-xs max-h-48 rounded mt-2"
+                  onError={(e) => console.error('Image load failed:', msg.image)}
                 />
-              )}
-              <span className="text-xs text-gray-500 block text-right">
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </span>
-              {isMine && (
-                <p className="text-sm font-semibold mb-1 text-right">You</p>
               )}
             </div>
           </div>
-        );
-      })}
+        ))
+      )}
     </div>
   );
 };

@@ -29,7 +29,7 @@ const AuthForm = ({ currState, setCurrState }) => {
         setMessage(data.error || 'An error occurred. Please try again.');
       }
     } catch (error) {
-      setMessage('Network error. Please try again.');
+      setMessage('Network error. Please check your connection and try again.');
     }
     setUsername('');
     setEmail('');
@@ -67,7 +67,7 @@ const AuthForm = ({ currState, setCurrState }) => {
           <input
             id="remember"
             type="checkbox"
-            className="w-4 h-4 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+            className="w-4 h-4 rounded bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-primary-600 dark:focus:ring-primary-500 focus:ring-2"
           />
           <label htmlFor="remember" className="ml-3 text-sm text-gray-500 dark:text-gray-300">
             Remember me
@@ -83,7 +83,7 @@ const AuthForm = ({ currState, setCurrState }) => {
       <div className="w-full">
         <button
           type="submit"
-          className="min-w-full bg-blue-500 shadow-lg hover:bg-blue-600 focus:ring-1/2 focus:outline-none font-medium border rounded-lg text-white text-sm px-5 py-2.5 text-center"
+          className="min-w-full bg-blue-500 shadow-lg hover:bg-blue-600 focus:ring-1/2 focus:outline-none font-medium border rounded-lg text-white text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:border-blue-500"
         >
           {isSignup ? 'Sign up' : 'Login'}
         </button>

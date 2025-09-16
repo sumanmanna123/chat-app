@@ -10,7 +10,7 @@ const FormToggleMessage = ({ currState, setCurrState }) => {
           Don’t have an account yet?{" "}
           <span
             onClick={() => setCurrState("Create your account")}
-            className="hover:underline text-gray-800 font-medium cursor-pointer"
+            className="hover:underline text-gray-800 font-medium cursor-pointer dark:text-gray-200"
           >
             Sign up
           </span>
@@ -18,9 +18,10 @@ const FormToggleMessage = ({ currState, setCurrState }) => {
       ) : (
         <>
           Already have an account?{" "}
+
           <span
             onClick={() => setCurrState("Login in to your account")}
-            className="hover:underline text-gray-800 font-medium cursor-pointer"
+            className="hover:underline text-gray-800 font-medium cursor-pointer dark:text-gray-200"
           >
             Login
           </span>
